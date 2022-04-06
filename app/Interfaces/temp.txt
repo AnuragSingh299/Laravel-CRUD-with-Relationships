@@ -1,0 +1,89 @@
+if($moduleName == 'Contact')
+                    {
+                 
+                        
+                        if(DB::table('account_contact')
+                        ->where('account_id', request()->all('account_id'))
+                        ->where('contact_id', $model->getKey())
+                        ->count() < 1)
+                        {
+                            $var = $model::find($model->getKey());
+                            $var->accounts()->attach(request()->all('account_id'));
+                        }
+                    }
+                    if(class_basename($model) == 'Project')
+                    {
+                        if(DB::table('account_project')
+                        ->where('account_id', request()->all('account_id'))
+                        ->where('project_id', $model->getKey())
+                        ->count() < 1)
+                        {
+                            $var = $model::find($model->getKey());
+                            $var->account()->attach(request()->all('account_id'));
+                        }
+
+                        if(DB::table('user_project')
+                        ->where('user_id', request()->all('user_id'))
+                        ->where('project_id', $model->getKey())
+                        ->count() < 1)
+                        {
+                            $var = $model::find($model->getKey());
+                            $var->users()->attach(request()->all('user_id'));
+                        }
+                    }
+
+                    // $var2= rtrim($var, "_id");
+                    // //dd($var2);
+                    // $pivot = rtrim(key(array_slice( request()->all(), -1, 1, true )), "_id")."_".strtolower($moduleName);
+                    // //dd($pivot);
+                    // $pivotColumn1 = $var;
+                    // $pivotColumn2 = strtolower($moduleName)."_id";
+                    // $relationType = $data[ucfirst($var2)]['relationshipname'];
+                    // //$test = array_column($data, 'relationshipname');
+                    // //dd($test);
+                
+                    // $relation = $relationType == "Many to Many" ? $var2.'s' : $var2;    
+                    // //dd($relation);
+                    // //dd($pivotColumn1);
+                    // //dd($data);
+                    // //dd($var);
+                    // if(DB::table($pivot)
+                    //     ->where($pivotColumn1, request()->all($var))
+                    //     ->where($pivotColumn2, $model->getKey())
+                    //     ->count() < 1)
+                    // {
+                    //     $obj = $model::find($model->getKey());
+                    //     $obj->$relation()->attach(request()->all($var));   
+                    // }
+                
+                    // //dd(count($data));
+
+_______________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________
+
+public function attachRelations($model)
+        {
+            $moduleName = class_basename($model);
+            $moduleData = config('relation.'.$moduleName);
+            $requestArray = request()->all(); 
+            $requestIdArray = array_slice($requestArray, -(count($moduleData)), count($moduleData), true); 
+            $i = count($requestIdArray);
+            while($i > 0)
+            {
+                $var = key(array_slice($requestArray, -($i), ($i), true ));
+                $var2= rtrim($var, "_id");
+                $pivot = rtrim(key(array_slice( request()->all($var), -1, 1, true )), "_id")."_".strtolower($moduleName);
+                $pivotColumn1 = $var;
+                $pivotColumn2 = strtolower($moduleName)."_id";
+                $relationType = $moduleData[ucfirst($var2)]['relationshipname'];
+                $relation = $relationType == "Many to Many" ? $var2.'s' : $var2;
+                if(DB::table($pivot)
+                    ->where($pivotColumn1, request()->all($var))
+                    ->where($pivotColumn2, $model->getKey())
+                    ->count() < 1)
+                {
+                    $obj = $model::find($model->getKey());
+                    $obj->$relation()->attach(request()->all($var));   
+                }
+                $i--;   
+            }
+        }
